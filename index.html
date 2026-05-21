@@ -195,7 +195,7 @@
 function loginWithThaID() {
     // ใส่ Client ID ที่คุณเพิ่งได้มาตรงนี้ (ใช้แค่ ID ห้ามใช้ Secret)
     const clientId = 'Q01pcldNbG5EbDBNcmVOaXJWc3prdmpHTXB4YXFOMmE'; 
-    const redirectUri = 'https://wn2528.github.io/eventssjnb/';
+    const redirectUri = 'https://wn2528.github.io/eventssjnb/index.html';
     
     // URL สำหรับการยืนยันตัวตนของกระทรวงสาธารณสุข
     const mophAuthUrl = 'https://id.moph.go.th/api/oauth/authorize'; 
@@ -207,7 +207,7 @@ function loginWithThaID() {
 }
      function loginWithThaID() {
     const clientId = 'Q01pcldNbG5EbDBNcmVOaXJWc3prdmpHTXB4YXFOMmE'; // ใช้ Client ID ของคุณ
-    const redirectUri = 'https://wn2528.github.io/eventssjnb/'; // ต้องตรงกับที่กรอกในฟอร์มของกระทรวง
+    const redirectUri = 'https://wn2528.github.io/eventssjnb/index.html'; // ต้องตรงกับที่กรอกในฟอร์มของกระทรวง
     const authUrl = 'https://id.moph.go.th/api/oauth/authorize';
     
     // สร้าง URL ไปยังระบบของกระทรวง
@@ -256,7 +256,20 @@ function loginWithThaID() {
         }
 
         // เรียกโหลดข้อมูลตารางเมื่อเปิดหน้าเว็บ
-        window.onload = loadEvents;
+      window.onload = function() {
+    // 1. ตรวจสอบว่ามีการส่งค่า code กลับมาหรือไม่
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+
+    if (authCode) {
+        console.log("ได้รับรหัสล็อกอินจากกระทรวงแล้ว:", authCode);
+        // ในขั้นตอนนี้ ปกติจะต้องส่ง authCode นี้ไปที่ Backend เพื่อแลก Token
+        // เพื่อให้เว็บไม่ขึ้น 404 หรือ Error ให้เราล้าง URL ทิ้งหลังจากได้รับค่าแล้ว
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // 2. โหลดข้อมูลกิจกรรมตามปกติ
+    loadEvents();
     </script>
 </body>
 </html>
