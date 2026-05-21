@@ -205,7 +205,14 @@ function loginWithThaID() {
     
     window.location.href = loginUrl;
 }
-        
+     function loginWithThaID() {
+    const clientId = 'Q01pcldNbG5EbDBNcmVOaXJWc3prdmpHTXB4YXFOMmE'; // ใช้ Client ID ของคุณ
+    const redirectUri = 'https://wn2528.github.io/eventssjnb/'; // ต้องตรงกับที่กรอกในฟอร์มของกระทรวง
+    const authUrl = 'https://id.moph.go.th/api/oauth/authorize';
+    
+    // สร้าง URL ไปยังระบบของกระทรวง
+    window.location.href = `${authUrl}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid`;
+}   
         // 3. ฟังก์ชันบันทึกข้อมูลใหม่ลงฐานข้อมูล
         async function saveEvent(e) {
             e.preventDefault(); // ป้องกันหน้าเว็บรีเฟรชเมื่อกดปุ่ม Submit
