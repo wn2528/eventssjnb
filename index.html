@@ -3,135 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แดชบอร์ดกิจกรรม สสจ.หนองบัวลำภู</title>
+    <title>ระบบจัดการกิจกรรม - สสจ.หนองบัวลำภู</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>body { font-family: 'Sarabun', sans-serif; }</style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-    <header class="bg-emerald-600 text-white p-6 shadow-md">
-        <h1 class="text-2xl font-semibold" id="org-name">โหลดข้อมูล...</h1>
-        <p class="text-emerald-100" id="dash-title">กำลังดึงข้อมูลระบบ...</p>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="https://upload.wikimedia.org/wikipedia/th/thumb/9/91/Ministry_of_Public_Health_Thailand_Emblem.svg/200px-Ministry_of_Public_Health_Thailand_Emblem.svg.png" 
+                     alt="โลโก้กระทรวงสาธารณสุข" class="h-12 w-12 object-contain">
+                <div>
+                    <h1 class="text-xl font-bold text-emerald-800">สำนักงานสาธารณสุขจังหวัดหนองบัวลำภู</h1>
+                    <p class="text-sm text-slate-500">ระบบรายงานตารางกิจกรรมและแผนการดำเนินงานออนไลน์</p>
+                </div>
+            </div>
+            <button class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
+                เข้าสู่ระบบด้วย ThaID
+            </button>
+        </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-6">
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow border border-slate-100">
-                <h3 class="text-slate-500 text-sm font-medium">กิจกรรมทั้งหมดเดือนนี้</h3>
-                <p class="text-3xl font-bold text-emerald-600 mt-2" id="total-events">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow border border-slate-100">
-                <h3 class="text-slate-500 text-sm font-medium">กิจกรรมที่กำลังจะมาถึง</h3>
-                <p class="text-3xl font-bold text-blue-600 mt-2" id="upcoming-count">0</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow border border-slate-100">
-                <h3 class="text-slate-500 text-sm font-medium">กิจกรรมที่เสร็จสิ้นแล้ว</h3>
-                <p class="text-3xl font-bold text-slate-600 mt-2" id="completed-count">0</p>
-            </div>
+    <main class="max-w-7xl mx-auto p-6 mt-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold text-slate-800">ตารางกิจกรรมทั้งหมด (ดึงข้อมูล Real-time)</h2>
         </div>
 
-        <h2 class="text-xl font-semibold mb-4">ตารางกิจกรรมที่กำลังจะมาถึง</h2>
-        <div class="bg-white rounded-lg shadow overflow-hidden" id="event-list">
-            </div>
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-600 text-sm border-b border-slate-200">
+                        <th class="p-4 font-semibold w-1/4">วัน/เวลา</th>
+                        <th class="p-4 font-semibold w-1/3">ชื่องาน</th>
+                        <th class="p-4 font-semibold">สถานที่</th>
+                        <th class="p-4 font-semibold text-center">กลุ่มเป้าหมาย (คน)</th>
+                        <th class="p-4 font-semibold">ผู้รับผิดชอบ</th>
+                    </tr>
+                </thead>
+                <tbody id="event-table-body">
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-slate-400">กำลังเชื่อมต่อฐานข้อมูล Supabase...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 
     <script>
-        // 1. นำข้อมูล JSON ฉบับเต็มของคุณมาใส่ในตัวแปร
-        const dashboardData = {
-          "dashboard_info": {
-            "organization": "สำนักงานสาธารณสุขจังหวัดหนองบัวลำภู",
-            "title": "ระบบรายงานตารางกิจกรรมและแผนการดำเนินงาน",
-            "last_updated": "2026-05-21T10:00:00+07:00",
-            "version": "1.0.0"
-          },
-          "summary_metrics": {
-            "total_events_this_month": 24,
-            "upcoming_events": 8,
-            "completed_events": 16,
-            "events_by_category": {
-              "meeting": 10,
-              "training": 5,
-              "field_visit": 6,
-              "campaign": 3
-            }
-          },
-          "event_categories": [
-            { "id": "cat_01", "name": "ประชุม/สัมมนา", "bg_color": "bg-blue-100", "text_color": "text-blue-800" },
-            { "id": "cat_02", "name": "ลงพื้นที่/ตรวจเยี่ยม", "bg_color": "bg-emerald-100", "text_color": "text-emerald-800" },
-            { "id": "cat_03", "name": "อบรม/พัฒนาบุคลากร", "bg_color": "bg-amber-100", "text_color": "text-amber-800" },
-            { "id": "cat_04", "name": "รณรงค์/ส่งเสริมสุขภาพ", "bg_color": "bg-red-100", "text_color": "text-red-800" }
-          ],
-          "upcoming_events": [
-            {
-              "event_id": "EVT-202605-001",
-              "title": "ประชุมคณะกรรมการโรคติดต่อจังหวัดหนองบัวลำภู ประจำเดือนพฤษภาคม",
-              "category_id": "cat_01",
-              "start_date": "2026-05-25T09:00:00+07:00",
-              "location": "ห้องประชุมร่มโพธิ์ทอง สำนักงานสาธารณสุขจังหวัดหนองบัวลำภู",
-              "organizer": "กลุ่มงานควบคุมโรคติดต่อ"
-            },
-            {
-              "event_id": "EVT-202605-002",
-              "title": "ลงพื้นที่ตรวจเยี่ยม รพ.สต. ในเขตอำเภอสุวรรณคูหา",
-              "category_id": "cat_02",
-              "start_date": "2026-05-27T08:30:00+07:00",
-              "location": "รพ.สต.บ้านโนนสว่าง และ รพ.สต.บ้านดง",
-              "organizer": "กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุข"
-            },
-            {
-              "event_id": "EVT-202606-001",
-              "title": "อบรมเชิงปฏิบัติการ อสม. ยุคดิจิทัล (Smart อสม.)",
-              "category_id": "cat_03",
-              "start_date": "2026-06-02T09:00:00+07:00",
-              "location": "โรงแรมภูฟ้ารีสอร์ท หนองบัวลำภู",
-              "organizer": "กลุ่มงานการปฐมภูมิและสุขภาพภาคประชาชน"
-            }
-          ]
-        };
+        // 配置 Supabase 連接 (ให้นำค่าจากข้อ 2 มาใส่ตรงนี้ครับ)
+        const SUPABASE_URL = 'https://nhkpluvztlqmbcazdzcv.supabase.co/rest/v1/';
+        const SUPABASE_ANON_KEY = 'nhkpluvztlqmbcazdzcv';
 
-        // 2. นำข้อมูลไปแสดงผลบน HTML
-        document.getElementById('org-name').innerText = dashboardData.dashboard_info.organization;
-        document.getElementById('dash-title').innerText = dashboardData.dashboard_info.title;
-        document.getElementById('total-events').innerText = dashboardData.summary_metrics.total_events_this_month;
-        document.getElementById('upcoming-count').innerText = dashboardData.summary_metrics.upcoming_events;
-        document.getElementById('completed-count').innerText = dashboardData.summary_metrics.completed_events;
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 3. ฟังก์ชันแปลงวันที่ ISO (เช่น 2026-05-25T09:00:00+07:00) ให้เป็นภาษาไทย
+        // ฟังก์ชันแปลงวันที่ ISO ให้เป็นรูปแบบภาษาไทยฉบับอ่านง่าย
         function formatThaiDate(isoString) {
             const date = new Date(isoString);
-            return date.toLocaleDateString('th-TH', { 
-                year: 'numeric', month: 'short', day: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            }) + ' น.';
+            const dateStr = date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+            const timeStr = date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+            return { dateStr, timeStr };
         }
 
-        // 4. วนลูปสร้างรายการกิจกรรมโดยดึงข้อมูลจาก JSON
-        const eventListContainer = document.getElementById('event-list');
-        
-        dashboardData.upcoming_events.forEach(event => {
-            // ค้นหาหมวดหมู่เพื่อดึงสีที่ตั้งไว้มาใช้
-            const category = dashboardData.event_categories.find(cat => cat.id === event.category_id);
+        // ฟังก์ชันดึงข้อมูลจากตาราง events ใน Supabase
+        async function loadEvents() {
+            const tableBody = document.getElementById('event-table-body');
             
-            const eventHTML = `
-                <div class="border-b border-slate-100 p-6 hover:bg-slate-50 transition">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <span class="px-2 py-1 text-xs font-semibold rounded ${category.bg_color} ${category.text_color} mb-2 inline-block">
-                                ${category.name}
-                            </span>
-                            <h4 class="text-lg font-medium text-slate-800">${event.title}</h4>
-                            <p class="text-sm text-slate-500 mt-1 flex items-center">
-                                📅 ${formatThaiDate(event.start_date)} | 📍 ${event.location}
-                            </p>
-                            <p class="text-xs text-slate-400 mt-1">ผู้รับผิดชอบ: ${event.organizer}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            eventListContainer.innerHTML += eventHTML;
-        });
+            try {
+                let { data: events, error } = await _supabase
+                    .from('events')
+                    .select('*')
+                    .order('start_datetime', { ascending: true });
+
+                if (error) throw error;
+
+                if (!events || events.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">ยังไม่มีกิจกรรมในระบบ</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = ''; // ล้างข้อความกำลังโหลดข้อมูล
+                
+                events.forEach(event => {
+                    const timeInfo = formatThaiDate(event.start_datetime);
+                    const endTimeInfo = formatThaiDate(event.end_datetime);
+                    
+                    const rowHTML = `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                            <td class="p-4 text-sm">
+                                <div class="font-medium text-slate-800">${timeInfo.dateStr}</div>
+                                <div class="text-slate-500 text-xs">${timeInfo.timeStr} - ${endTimeInfo.timeStr}</div>
+                            </td>
+                            <td class="p-4 text-sm font-medium text-emerald-800">
+                                ${event.title}
+                                ${event.remarks ? `<div class="text-xs text-amber-600 mt-1 font-normal">หมายเหตุ: ${event.remarks}</div>` : ''}
+                            </td>
+                            <td class="p-4 text-sm text-slate-600">${event.location}</td>
+                            <td class="p-4 text-sm text-center">
+                                <div class="text-slate-800 font-medium">${event.target_count}</div>
+                                <div class="text-xs text-slate-400" title="${event.target_audience_desc || ''}">ดูรายละเอียด</div>
+                            </td>
+                            <td class="p-4 text-sm text-slate-600">${event.organizer}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += rowHTML;
+                });
+
+            } catch (err) {
+                console.error(err);
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">เกิดข้อผิดพลาดในการดึงข้อมูล: ${err.message}</td></tr>`;
+            }
+        }
+
+        // เรียกใช้งานฟังก์ชันเมื่อหน้าเว็บโหลดเสร็จ
+        window.onload = loadEvents;
     </script>
 </body>
 </html>
