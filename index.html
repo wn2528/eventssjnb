@@ -20,7 +20,7 @@
                     <p class="text-sm text-slate-500">ระบบรายงานตารางกิจกรรมและแผนการดำเนินงานออนไลน์</p>
                 </div>
             </div>
-            <button class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
+            <button id="btn-login-top" onclick="loginWithThaID()" class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
                 เข้าสู่ระบบด้วย ThaID
             </button>
         </div>
@@ -123,7 +123,7 @@
 
     <script>
         // ------------------------------------------------------------------
-        // ตั้งค่า Supabase (นำรหัสของคุณมาใส่ที่ 2 บรรทัดนี้ครับ)
+        // 1. ตั้งค่า Supabase และ ThaID API
         // ------------------------------------------------------------------
         const SUPABASE_URL = 'https://nhkpluvztlqmbcazdzcv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oa3BsdXZ6dGxxbWJjYXpkemN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzU5ODksImV4cCI6MjA5NDk1MTk4OX0.K_rawqKNA95gKMPh4LoG-48s9hSlhcNuenOtyjVb8Oo';
@@ -131,7 +131,88 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ฟังก์ชันแปลงวันที่
+        // ⚠️ สำคัญ: ใส่ Client ID ของคุณ และตรวจสอบลิงก์ Redirect ให้ตรงกับ Repository ปัจจุบัน
+        const MOPH_CLIENT_ID = 'Q01pcldNbG5EbDBNcmVOaXJWc3prdmpHTXB4YXFOMmE'; 
+        // เปลี่ยน eventssjnb หรือ eventjs ให้ตรงกับชื่อโปรเจกต์ที่ใช้งานจริงครับ
+        const REDIRECT_URI = 'https://wn2528.github.io/eventssjnb/'; 
+
+        // ------------------------------------------------------------------
+        // 2. ระบบตรวจสอบตอนเปิดหน้าเว็บ
+        // ------------------------------------------------------------------
+        window.onload = function() {
+            // ดักจับรหัสตอนที่กระทรวงส่งกลับมา
+            const urlParams = new URLSearchParams(window.location.search);
+            const authCode = urlParams.get('code');
+
+            if (authCode) {
+                // บันทึกสถานะว่าล็อกอินสำเร็จแล้ว
+                localStorage.setItem('isLoggedIn', 'true');
+                
+                // ล้าง URL ให้สะอาด ป้องกัน Error 404
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // เปิดหน้าต่างเพิ่มกิจกรรมให้เลยทันที
+                document.getElementById('eventModal').classList.remove('hidden');
+            }
+
+            loadEvents();
+            updateLoginButtonUI();
+        };
+
+        // ------------------------------------------------------------------
+        // 3. ปรับปรุงปุ่มเปิดฟอร์ม (เช็กสิทธิ์ก่อน)
+        // ------------------------------------------------------------------
+        function openModal() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+            if (!isLoggedIn) {
+                // ถ้ายังไม่ล็อกอิน ให้พาไปหน้าเข้าสู่ระบบทันที
+                alert('กรุณาเข้าสู่ระบบด้วย Provider ID / ThaID ก่อนเพิ่มกิจกรรมครับ');
+                loginWithThaID();
+            } else {
+                // ล็อกอินแล้ว เปิดฟอร์มได้เลย
+                document.getElementById('eventModal').classList.remove('hidden');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+            document.getElementById('addEventForm').reset();
+        }
+
+        // ------------------------------------------------------------------
+        // 4. ฟังก์ชัน Login / Logout
+        // ------------------------------------------------------------------
+        function loginWithThaID() {
+            const authUrl = 'https://id.moph.go.th/api/oauth/authorize';
+            window.location.href = `${authUrl}?response_type=code&client_id=${MOPH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=openid`;
+        }
+
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            updateLoginButtonUI();
+        }
+
+        function updateLoginButtonUI() {
+            const loginBtn = document.getElementById('btn-login-top');
+            if (!loginBtn) return;
+
+            if (localStorage.getItem('isLoggedIn')) {
+                loginBtn.innerHTML = 'ออกจากระบบ';
+                loginBtn.classList.replace('bg-[#1A3668]', 'bg-red-600');
+                loginBtn.classList.replace('hover:bg-[#12264A]', 'hover:bg-red-700');
+                loginBtn.onclick = logout;
+            } else {
+                loginBtn.innerHTML = 'เข้าสู่ระบบด้วย ThaID';
+                loginBtn.classList.replace('bg-red-600', 'bg-[#1A3668]');
+                loginBtn.classList.replace('hover:bg-red-700', 'hover:bg-[#12264A]');
+                loginBtn.onclick = loginWithThaID;
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 5. ฟังก์ชันดึงและบันทึกข้อมูลตาราง (ของเดิม)
+        // ------------------------------------------------------------------
         function formatThaiDate(isoString) {
             const date = new Date(isoString);
             const dateStr = date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -139,7 +220,6 @@
             return { dateStr, timeStr };
         }
 
-        // 1. ฟังก์ชันดึงข้อมูลมาแสดงตาราง (เหมือนเดิม)
         async function loadEvents() {
             const tableBody = document.getElementById('event-table-body');
             try {
@@ -182,26 +262,15 @@
             }
         }
 
-        // 2. ระบบเปิด-ปิด Modal
-        function openModal() {
-            document.getElementById('eventModal').classList.remove('hidden');
-        }
-        function closeModal() {
-            document.getElementById('eventModal').classList.add('hidden');
-            document.getElementById('addEventForm').reset(); // ล้างข้อมูลในฟอร์ม
-        }
-
-        // 3. ฟังก์ชันบันทึกข้อมูลใหม่ลงฐานข้อมูล
         async function saveEvent(e) {
-            e.preventDefault(); // ป้องกันหน้าเว็บรีเฟรชเมื่อกดปุ่ม Submit
+            e.preventDefault(); 
             
             const btnSubmit = document.getElementById('btn-submit');
             btnSubmit.innerHTML = 'กำลังบันทึก...';
             btnSubmit.disabled = true;
 
-            // ดึงค่าจากช่องต่างๆ ในฟอร์ม
             const newEvent = {
-                event_id: 'EVT-' + Date.now(), // สร้างรหัสกิจกรรมอัตโนมัติจากเวลา
+                event_id: 'EVT-' + Date.now(),
                 title: document.getElementById('form-title').value,
                 category_id: document.getElementById('form-category').value,
                 start_datetime: new Date(document.getElementById('form-start').value).toISOString(),
@@ -211,18 +280,17 @@
                 target_count: parseInt(document.getElementById('form-audience-count').value),
                 organizer: document.getElementById('form-organizer').value,
                 remarks: document.getElementById('form-remarks').value,
-                created_by: '1100000000000', // จำลองเลขบัตร ปชช. ของ Admin สสจ. ไปก่อน
+                created_by: '1100000000000', 
                 status: 'confirmed'
             };
 
             try {
-                // ส่งข้อมูลไปบันทึกที่ Supabase
                 const { data, error } = await _supabase.from('events').insert([newEvent]);
                 if (error) throw error;
 
                 alert('บันทึกข้อมูลกิจกรรมสำเร็จ!');
                 closeModal();
-                loadEvents(); // โหลดตารางใหม่เพื่อให้ข้อมูลที่เพิ่งเพิ่มแสดงขึ้นมา
+                loadEvents(); 
                 
             } catch (err) {
                 console.error(err);
@@ -232,9 +300,6 @@
                 btnSubmit.disabled = false;
             }
         }
-
-        // เรียกโหลดข้อมูลตารางเมื่อเปิดหน้าเว็บ
-        window.onload = loadEvents;
     </script>
 </body>
 </html>
