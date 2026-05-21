@@ -20,9 +20,9 @@
                     <p class="text-sm text-slate-500">ระบบรายงานตารางกิจกรรมและแผนการดำเนินงานออนไลน์</p>
                 </div>
             </div>
-            <button class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
-                เข้าสู่ระบบด้วย ThaID
-            </button>
+            <button onclick="loginWithThaID()" class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
+    เข้าสู่ระบบด้วย ThaID
+</button>
         </div>
     </header>
 
@@ -191,6 +191,21 @@
             document.getElementById('addEventForm').reset(); // ล้างข้อมูลในฟอร์ม
         }
 
+// ฟังก์ชันส่งผู้ใช้ไปหน้าล็อกอิน MOPH IDP / ThaID
+function loginWithThaID() {
+    // ใส่ Client ID ที่คุณเพิ่งได้มาตรงนี้ (ใช้แค่ ID ห้ามใช้ Secret)
+    const clientId = 'Q01pcldNbG5EbDBNcmVOaXJWc3prdmpHTXB4YXFOMmE'; 
+    const redirectUri = 'https://wn2528.github.io/eventssjnb/';
+    
+    // URL สำหรับการยืนยันตัวตนของกระทรวงสาธารณสุข
+    const mophAuthUrl = 'https://id.moph.go.th/api/oauth/authorize'; 
+    
+    // สร้างลิงก์และสั่งให้หน้าเว็บกระโดดไป
+    const loginUrl = `${mophAuthUrl}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid`;
+    
+    window.location.href = loginUrl;
+}
+        
         // 3. ฟังก์ชันบันทึกข้อมูลใหม่ลงฐานข้อมูล
         async function saveEvent(e) {
             e.preventDefault(); // ป้องกันหน้าเว็บรีเฟรชเมื่อกดปุ่ม Submit
