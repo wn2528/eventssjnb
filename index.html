@@ -207,8 +207,8 @@ window.onload = async function() {
         // ------------------------------------------------------------------
         // แก้ไขบรรทัดที่ตั้งค่า MOPH URL ให้เป็นระบบ UAT ตามคู่มือ
 function loginWithThaID() {
-    // ใช้ UAT สำหรับทดสอบก่อน
-    const MOPH_AUTH_URL = 'https://uat-provider.id.th/v1/oauth2/authorize';
+    // เปลี่ยนจาก https://uat-provider.id.th/... เป็นลิงก์ด้านล่างนี้ครับ
+const MOPH_AUTH_URL = 'https://provider.id.th/v1/oauth2/authorize';
     
     // ขอสิทธิ์ตามคู่มือ: เลขปชช, คำนำหน้า, ชื่อไทย, ข้อมูลหน่วยบริการ
     const SCOPES = 'cid title_th name_th organization'; 
