@@ -205,10 +205,16 @@ window.onload = async function() {
         // ------------------------------------------------------------------
         // 4. ฟังก์ชัน Login / Logout
         // ------------------------------------------------------------------
-        function loginWithThaID() {
-            const authUrl = 'https://id.moph.go.th/api/oauth/authorize';
-            window.location.href = `${authUrl}?response_type=code&client_id=${MOPH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=openid`;
-        }
+        // แก้ไขบรรทัดที่ตั้งค่า MOPH URL ให้เป็นระบบ UAT ตามคู่มือ
+function loginWithThaID() {
+    // ใช้ UAT สำหรับทดสอบก่อน
+    const MOPH_AUTH_URL = 'https://uat-provider.id.th/v1/oauth2/authorize';
+    
+    // ขอสิทธิ์ตามคู่มือ: เลขปชช, คำนำหน้า, ชื่อไทย, ข้อมูลหน่วยบริการ
+    const SCOPES = 'cid title_th name_th organization'; 
+    
+    window.location.href = `${MOPH_AUTH_URL}?response_type=code&client_id=${MOPH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
+}
 
         function logout() {
             localStorage.removeItem('isLoggedIn');
