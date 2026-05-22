@@ -139,25 +139,47 @@
         // ------------------------------------------------------------------
         // 2. ระบบตรวจสอบตอนเปิดหน้าเว็บ
         // ------------------------------------------------------------------
-        window.onload = function() {
-            // ดักจับรหัสตอนที่กระทรวงส่งกลับมา
-            const urlParams = new URLSearchParams(window.location.search);
-            const authCode = urlParams.get('code');
+window.onload = async function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
 
-            if (authCode) {
-                // บันทึกสถานะว่าล็อกอินสำเร็จแล้ว
+    if (authCode) {
+        // ล้าง URL ให้สะอาด
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // เปลี่ยนข้อความปุ่มเพื่อบอกผู้ใช้ว่ากำลังประมวลผล
+        const btnLogin = document.getElementById('btn-login-top');
+        if(btnLogin) btnLogin.innerHTML = 'กำลังยืนยันตัวตน...';
+
+        try {
+            // ส่ง Code ไปให้ Google Apps Script ช่วยย่อยข้อมูล
+            const gasUrl = 'วาง_URL_ของเว็บแอป_Google_ที่ก๊อปปี้มาตรงนี้ครับ'; 
+            
+            const response = await fetch(`${gasUrl}?code=${authCode}`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                const userData = result.data;
+                
+                // บันทึกข้อมูลที่ได้มาลงในเบราว์เซอร์
                 localStorage.setItem('isLoggedIn', 'true');
-                
-                // ล้าง URL ให้สะอาด ป้องกัน Error 404
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // เปิดหน้าต่างเพิ่มกิจกรรมให้เลยทันที
-                document.getElementById('eventModal').classList.remove('hidden');
-            }
+                localStorage.setItem('userPid', userData.pid); // เก็บเลข ปชช.
+                localStorage.setItem('userName', `${userData.given_name} ${userData.family_name}`); // เก็บชื่อ
 
-            loadEvents();
-            updateLoginButtonUI();
-        };
+                alert(`ยินดีต้อนรับคุณ ${userData.given_name} เข้าสู่ระบบสำเร็จ!`);
+                document.getElementById('eventModal').classList.remove('hidden');
+            } else {
+                alert('เกิดข้อผิดพลาดจากระบบกระทรวงฯ: ' + result.message);
+            }
+        } catch (error) {
+            alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์หลังบ้านได้ครับ');
+            console.error(error);
+        }
+    }
+
+    loadEvents();
+    updateLoginButtonUI();
+};
 
         // ------------------------------------------------------------------
         // 3. ปรับปรุงปุ่มเปิดฟอร์ม (เช็กสิทธิ์ก่อน)
