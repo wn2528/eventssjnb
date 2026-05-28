@@ -14,14 +14,15 @@
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="logo.png" alt="โลโก้กระทรวงสาธารณสุข" class="h-12 w-12 object-contain" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/9/91/Ministry_of_Public_Health_Thailand_Emblem.svg'">
+                <img src="logo.png" alt="โลโก้" class="h-12 w-12 object-contain" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/9/91/Ministry_of_Public_Health_Thailand_Emblem.svg'">
                 <div>
                     <h1 class="text-xl font-bold text-emerald-800">สำนักงานสาธารณสุขจังหวัดหนองบัวลำภู</h1>
                     <p class="text-sm text-slate-500">ระบบรายงานตารางกิจกรรมและแผนการดำเนินงานออนไลน์</p>
                 </div>
             </div>
-            <button id="btn-login-top" onclick="loginWithThaID()" class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
-                เข้าสู่ระบบด้วย ThaID
+            <!-- ปุ่มเข้าสู่ระบบมุมขวาบน -->
+            <button id="btn-login-top" onclick="openLoginModal()" class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
+                เข้าสู่ระบบ (Admin)
             </button>
         </div>
     </header>
@@ -29,7 +30,7 @@
     <main class="max-w-7xl mx-auto p-6 mt-4">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-semibold text-slate-800">ตารางกิจกรรมทั้งหมด</h2>
-            <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow-sm text-sm font-medium transition">
+            <button onclick="openEventModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow-sm text-sm font-medium transition">
                 + เพิ่มกิจกรรมใหม่
             </button>
         </div>
@@ -52,19 +53,46 @@
         </div>
     </main>
 
+    <!-- ========================================== -->
+    <!-- Modal: สำหรับเข้าสู่ระบบ (Login) -->
+    <!-- ========================================== -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-[#1A3668]">เข้าสู่ระบบสำหรับเจ้าหน้าที่</h3>
+                <button onclick="closeLoginModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">อีเมล (Email)</label>
+                    <input type="email" id="login-email" required class="w-full border border-slate-300 rounded-md p-2 focus:ring-[#1A3668] focus:border-[#1A3668]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (Password)</label>
+                    <input type="password" id="login-password" required class="w-full border border-slate-300 rounded-md p-2 focus:ring-[#1A3668] focus:border-[#1A3668]">
+                </div>
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="submit" id="btn-submit-login" class="w-full py-2 bg-[#1A3668] text-white rounded font-medium hover:bg-[#12264A] transition">เข้าสู่ระบบ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Modal: สำหรับเพิ่มกิจกรรม (ของเดิม) -->
+    <!-- ========================================== -->
     <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-lg">
                 <h3 class="text-xl font-semibold text-emerald-800">บันทึกกิจกรรมใหม่</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+                <button onclick="closeEventModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
-            
             <form id="addEventForm" onsubmit="saveEvent(event)" class="p-6 space-y-4">
+                <!-- ข้อมูลฟอร์มเหมือนเดิมทุกอย่าง -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">ชื่องาน/โครงการ <span class="text-red-500">*</span></label>
-                    <input type="text" id="form-title" required class="w-full border border-slate-300 rounded-md p-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    <input type="text" id="form-title" required class="w-full border border-slate-300 rounded-md p-2">
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">หมวดหมู่ <span class="text-red-500">*</span></label>
@@ -80,7 +108,6 @@
                         <input type="text" id="form-organizer" required placeholder="เช่น กลุ่มงานควบคุมโรคติดต่อ" class="w-full border border-slate-300 rounded-md p-2">
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">วัน-เวลา เริ่มต้น <span class="text-red-500">*</span></label>
@@ -91,30 +118,26 @@
                         <input type="datetime-local" id="form-end" required class="w-full border border-slate-300 rounded-md p-2">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">สถานที่จัดกิจกรรม <span class="text-red-500">*</span></label>
                     <input type="text" id="form-location" required class="w-full border border-slate-300 rounded-md p-2">
                 </div>
-
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1">กลุ่มเป้าหมาย (รายละเอียด)</label>
-                        <input type="text" id="form-audience-desc" placeholder="เช่น ผู้อำนวยการ รพ.สต. ทุกแห่ง" class="w-full border border-slate-300 rounded-md p-2">
+                        <input type="text" id="form-audience-desc" class="w-full border border-slate-300 rounded-md p-2">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">จำนวน (คน)</label>
                         <input type="number" id="form-audience-count" min="0" value="0" class="w-full border border-slate-300 rounded-md p-2">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">หมายเหตุ</label>
                     <textarea id="form-remarks" rows="2" class="w-full border border-slate-300 rounded-md p-2"></textarea>
                 </div>
-
                 <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 rounded text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 border border-slate-300 rounded text-slate-600 hover:bg-slate-50">ยกเลิก</button>
                     <button type="submit" id="btn-submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">บันทึกข้อมูล</button>
                 </div>
             </form>
@@ -123,7 +146,7 @@
 
     <script>
         // ------------------------------------------------------------------
-        // 1. ตั้งค่า Supabase และ ThaID API
+        // 1. ตั้งค่า Supabase (ใช้ Key ของเดิม)
         // ------------------------------------------------------------------
         const SUPABASE_URL = 'https://nhkpluvztlqmbcazdzcv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oa3BsdXZ6dGxxbWJjYXpkemN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzU5ODksImV4cCI6MjA5NDk1MTk4OX0.K_rawqKNA95gKMPh4LoG-48s9hSlhcNuenOtyjVb8Oo';
@@ -131,115 +154,111 @@
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ⚠️ สำคัญ: ใส่ Client ID ของคุณ และตรวจสอบลิงก์ Redirect ให้ตรงกับ Repository ปัจจุบัน
-        const MOPH_CLIENT_ID = 'Q01pcldNbG5EbDBNcmVOaXJWc3prdmpHTXB4YXFOMmE'; 
-        // เปลี่ยน eventssjnb หรือ eventjs ให้ตรงกับชื่อโปรเจกต์ที่ใช้งานจริงครับ
-        const REDIRECT_URI = 'https://wn2528.github.io/eventssjnb/'; 
+        // ตัวแปรเก็บสถานะล็อกอิน
+        let currentUser = null;
 
         // ------------------------------------------------------------------
-        // 2. ระบบตรวจสอบตอนเปิดหน้าเว็บ
+        // 2. ตรวจสอบสถานะล็อกอินเมื่อเปิดหน้าเว็บ
         // ------------------------------------------------------------------
-window.onload = async function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const authCode = urlParams.get('code');
-
-    if (authCode) {
-        // ล้าง URL ให้สะอาด
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        // เปลี่ยนข้อความปุ่มเพื่อบอกผู้ใช้ว่ากำลังประมวลผล
-        const btnLogin = document.getElementById('btn-login-top');
-        if(btnLogin) btnLogin.innerHTML = 'กำลังยืนยันตัวตน...';
-
-        try {
-            // ส่ง Code ไปให้ Google Apps Script ช่วยย่อยข้อมูล
-            const gasUrl = 'วาง_URL_ของเว็บแอป_Google_ที่ก๊อปปี้มาตรงนี้ครับ'; 
+        window.onload = async function() {
+            // ดึง Session ปัจจุบันจาก Supabase (ถ้าเคยล็อกอินไว้ มันจะจำได้)
+            const { data: { session } } = await _supabase.auth.getSession();
             
-            const response = await fetch(`${gasUrl}?code=${authCode}`);
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                const userData = result.data;
-                
-                // บันทึกข้อมูลที่ได้มาลงในเบราว์เซอร์
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('userPid', userData.pid); // เก็บเลข ปชช.
-                localStorage.setItem('userName', `${userData.given_name} ${userData.family_name}`); // เก็บชื่อ
-
-                alert(`ยินดีต้อนรับคุณ ${userData.given_name} เข้าสู่ระบบสำเร็จ!`);
-                document.getElementById('eventModal').classList.remove('hidden');
+            if (session) {
+                currentUser = session.user;
+                updateLoginButtonUI(true);
             } else {
-                alert('เกิดข้อผิดพลาดจากระบบกระทรวงฯ: ' + result.message);
+                updateLoginButtonUI(false);
             }
-        } catch (error) {
-            alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์หลังบ้านได้ครับ');
-            console.error(error);
+            
+            loadEvents();
+        };
+
+        // ------------------------------------------------------------------
+        // 3. ระบบล็อกอินด้วย Email / Password
+        // ------------------------------------------------------------------
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
         }
-    }
 
-    loadEvents();
-    updateLoginButtonUI();
-};
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+        }
 
-        // ------------------------------------------------------------------
-        // 3. ปรับปรุงปุ่มเปิดฟอร์ม (เช็กสิทธิ์ก่อน)
-        // ------------------------------------------------------------------
-        function openModal() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-submit-login');
+            
+            btn.innerHTML = 'กำลังตรวจสอบ...';
+            btn.disabled = true;
 
-            if (!isLoggedIn) {
-                // ถ้ายังไม่ล็อกอิน ให้พาไปหน้าเข้าสู่ระบบทันที
-                alert('กรุณาเข้าสู่ระบบด้วย Provider ID / ThaID ก่อนเพิ่มกิจกรรมครับ');
-                loginWithThaID();
+            // ยิงไปเช็กกับ Supabase Auth
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            btn.innerHTML = 'เข้าสู่ระบบ';
+            btn.disabled = false;
+
+            if (error) {
+                alert('อีเมลหรือรหัสผ่านไม่ถูกต้องครับ กรุณาลองใหม่');
+                console.error(error);
             } else {
-                // ล็อกอินแล้ว เปิดฟอร์มได้เลย
-                document.getElementById('eventModal').classList.remove('hidden');
+                alert('เข้าสู่ระบบสำเร็จ!');
+                currentUser = data.user;
+                closeLoginModal();
+                updateLoginButtonUI(true);
             }
         }
 
-        function closeModal() {
-            document.getElementById('eventModal').classList.add('hidden');
-            document.getElementById('addEventForm').reset();
+        async function logout() {
+            await _supabase.auth.signOut();
+            currentUser = null;
+            alert('ออกจากระบบเรียบร้อยแล้ว');
+            updateLoginButtonUI(false);
         }
 
-        // ------------------------------------------------------------------
-        // 4. ฟังก์ชัน Login / Logout
-        // ------------------------------------------------------------------
-        // แก้ไขบรรทัดที่ตั้งค่า MOPH URL ให้เป็นระบบ UAT ตามคู่มือ
-function loginWithThaID() {
-    // เปลี่ยนจาก https://uat-provider.id.th/... เป็นลิงก์ด้านล่างนี้ครับ
-const MOPH_AUTH_URL = 'https://provider.id.th/v1/oauth2/authorize';
-    
-    // ขอสิทธิ์ตามคู่มือ: เลขปชช, คำนำหน้า, ชื่อไทย, ข้อมูลหน่วยบริการ
-    const SCOPES = 'cid title_th name_th organization'; 
-    
-    window.location.href = `${MOPH_AUTH_URL}?response_type=code&client_id=${MOPH_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
-}
-
-        function logout() {
-            localStorage.removeItem('isLoggedIn');
-            updateLoginButtonUI();
-        }
-
-        function updateLoginButtonUI() {
+        function updateLoginButtonUI(isLoggedIn) {
             const loginBtn = document.getElementById('btn-login-top');
             if (!loginBtn) return;
 
-            if (localStorage.getItem('isLoggedIn')) {
+            if (isLoggedIn) {
                 loginBtn.innerHTML = 'ออกจากระบบ';
                 loginBtn.classList.replace('bg-[#1A3668]', 'bg-red-600');
                 loginBtn.classList.replace('hover:bg-[#12264A]', 'hover:bg-red-700');
                 loginBtn.onclick = logout;
             } else {
-                loginBtn.innerHTML = 'เข้าสู่ระบบด้วย ThaID';
+                loginBtn.innerHTML = 'เข้าสู่ระบบ (Admin)';
                 loginBtn.classList.replace('bg-red-600', 'bg-[#1A3668]');
                 loginBtn.classList.replace('hover:bg-red-700', 'hover:bg-[#12264A]');
-                loginBtn.onclick = loginWithThaID;
+                loginBtn.onclick = openLoginModal;
             }
         }
 
         // ------------------------------------------------------------------
-        // 5. ฟังก์ชันดึงและบันทึกข้อมูลตาราง (ของเดิม)
+        // 4. ระบบเปิด-ปิด ฟอร์มเพิ่มกิจกรรม
+        // ------------------------------------------------------------------
+        function openEventModal() {
+            if (!currentUser) {
+                alert('กรุณาเข้าสู่ระบบก่อนเพิ่มกิจกรรมครับ');
+                openLoginModal(); // ถ้ายังไม่ล็อกอิน ให้เด้งหน้าต่างล็อกอินขึ้นมา
+            } else {
+                document.getElementById('eventModal').classList.remove('hidden');
+            }
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+            document.getElementById('addEventForm').reset();
+        }
+
+        // ------------------------------------------------------------------
+        // 5. โหลดและบันทึกข้อมูลตาราง (เหมือนเดิม)
         // ------------------------------------------------------------------
         function formatThaiDate(isoString) {
             const date = new Date(isoString);
@@ -277,7 +296,6 @@ const MOPH_AUTH_URL = 'https://provider.id.th/v1/oauth2/authorize';
                             <td class="p-4 text-sm text-slate-600">${event.location}</td>
                             <td class="p-4 text-sm text-center">
                                 <div class="text-slate-800 font-medium">${event.target_count}</div>
-                                <div class="text-xs text-slate-400" title="${event.target_audience_desc || ''}">ดูรายละเอียด</div>
                             </td>
                             <td class="p-4 text-sm text-slate-600">${event.organizer}</td>
                         </tr>
@@ -308,16 +326,16 @@ const MOPH_AUTH_URL = 'https://provider.id.th/v1/oauth2/authorize';
                 target_count: parseInt(document.getElementById('form-audience-count').value),
                 organizer: document.getElementById('form-organizer').value,
                 remarks: document.getElementById('form-remarks').value,
-                created_by: '1100000000000', 
+                created_by: currentUser.email, // บันทึกว่าใครเป็นคนสร้าง
                 status: 'confirmed'
             };
 
             try {
-                const { data, error } = await _supabase.from('events').insert([newEvent]);
+                const { error } = await _supabase.from('events').insert([newEvent]);
                 if (error) throw error;
 
                 alert('บันทึกข้อมูลกิจกรรมสำเร็จ!');
-                closeModal();
+                closeEventModal();
                 loadEvents(); 
                 
             } catch (err) {
