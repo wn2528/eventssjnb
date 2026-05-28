@@ -20,9 +20,8 @@
                     <p class="text-sm text-slate-500">ระบบรายงานตารางกิจกรรมและแผนการดำเนินงานออนไลน์</p>
                 </div>
             </div>
-            <!-- ปุ่มเข้าสู่ระบบมุมขวาบน -->
             <button id="btn-login-top" onclick="openLoginModal()" class="flex items-center gap-2 bg-[#1A3668] hover:bg-[#12264A] text-white px-5 py-2.5 rounded-lg font-medium transition shadow-sm">
-                เข้าสู่ระบบ (Admin)
+                เข้าสู่ระบบ (เจ้าหน้าที่)
             </button>
         </div>
     </header>
@@ -40,22 +39,20 @@
                 <thead>
                     <tr class="bg-slate-100 text-slate-600 text-sm border-b border-slate-200">
                         <th class="p-4 font-semibold w-1/4">วัน/เวลา</th>
-                        <th class="p-4 font-semibold w-1/3">ชื่องาน</th>
+                        <th class="p-4 font-semibold w-1/4">ชื่องาน</th>
                         <th class="p-4 font-semibold">สถานที่</th>
                         <th class="p-4 font-semibold text-center">กลุ่มเป้าหมาย (คน)</th>
                         <th class="p-4 font-semibold">ผู้รับผิดชอบ</th>
+                        <th class="p-4 font-semibold text-center">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody id="event-table-body">
-                    <tr><td colspan="5" class="p-8 text-center text-slate-400">กำลังโหลดข้อมูล...</td></tr>
+                    <tr><td colspan="6" class="p-8 text-center text-slate-400">กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
-    <!-- ========================================== -->
-    <!-- Modal: สำหรับเข้าสู่ระบบ (Login) -->
-    <!-- ========================================== -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <div class="flex justify-between items-center mb-4">
@@ -78,17 +75,13 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- Modal: สำหรับเพิ่มกิจกรรม (ของเดิม) -->
-    <!-- ========================================== -->
     <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-lg">
-                <h3 class="text-xl font-semibold text-emerald-800">บันทึกกิจกรรมใหม่</h3>
+                <h3 id="modal-title" class="text-xl font-semibold text-emerald-800">บันทึกกิจกรรมใหม่</h3>
                 <button onclick="closeEventModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
             </div>
             <form id="addEventForm" onsubmit="saveEvent(event)" class="p-6 space-y-4">
-                <!-- ข้อมูลฟอร์มเหมือนเดิมทุกอย่าง -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">ชื่องาน/โครงการ <span class="text-red-500">*</span></label>
                     <input type="text" id="form-title" required class="w-full border border-slate-300 rounded-md p-2">
@@ -145,23 +138,26 @@
     </div>
 
     <script>
-        // ------------------------------------------------------------------
-        // 1. ตั้งค่า Supabase (ใช้ Key ของเดิม)
-        // ------------------------------------------------------------------
+        // ==========================================
+        // 1. ตั้งค่า Supabase
+        // ==========================================
         const SUPABASE_URL = 'https://nhkpluvztlqmbcazdzcv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oa3BsdXZ6dGxxbWJjYXpkemN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzU5ODksImV4cCI6MjA5NDk1MTk4OX0.K_rawqKNA95gKMPh4LoG-48s9hSlhcNuenOtyjVb8Oo';
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ตัวแปรเก็บสถานะล็อกอิน
+        // ตัวแปรเก็บสถานะการทำงาน
         let currentUser = null;
+        let editingEventId = null; // null = โหมดเพิ่ม, มีค่า = โหมดแก้ไข
 
-        // ------------------------------------------------------------------
-        // 2. ตรวจสอบสถานะล็อกอินเมื่อเปิดหน้าเว็บ
-        // ------------------------------------------------------------------
+        // อีเมล Admin สสจ. (เปลี่ยนได้ตามต้องการ)
+        const ADMIN_EMAIL = 'admin@nblp.go.th';
+
+        // ==========================================
+        // 2. ตรวจสอบสถานะล็อกอินตอนเปิดหน้าเว็บ
+        // ==========================================
         window.onload = async function() {
-            // ดึง Session ปัจจุบันจาก Supabase (ถ้าเคยล็อกอินไว้ มันจะจำได้)
             const { data: { session } } = await _supabase.auth.getSession();
             
             if (session) {
@@ -174,9 +170,9 @@
             loadEvents();
         };
 
-        // ------------------------------------------------------------------
-        // 3. ระบบล็อกอินด้วย Email / Password
-        // ------------------------------------------------------------------
+        // ==========================================
+        // 3. ระบบล็อกอิน
+        // ==========================================
         function openLoginModal() {
             document.getElementById('loginModal').classList.remove('hidden');
         }
@@ -196,7 +192,6 @@
             btn.innerHTML = 'กำลังตรวจสอบ...';
             btn.disabled = true;
 
-            // ยิงไปเช็กกับ Supabase Auth
             const { data, error } = await _supabase.auth.signInWithPassword({
                 email: email,
                 password: password,
@@ -207,12 +202,12 @@
 
             if (error) {
                 alert('อีเมลหรือรหัสผ่านไม่ถูกต้องครับ กรุณาลองใหม่');
-                console.error(error);
             } else {
                 alert('เข้าสู่ระบบสำเร็จ!');
                 currentUser = data.user;
                 closeLoginModal();
                 updateLoginButtonUI(true);
+                loadEvents(); // โหลดตารางใหม่เพื่อให้ปุ่มจัดการโผล่
             }
         }
 
@@ -221,6 +216,7 @@
             currentUser = null;
             alert('ออกจากระบบเรียบร้อยแล้ว');
             updateLoginButtonUI(false);
+            loadEvents(); // โหลดตารางใหม่เพื่อให้ปุ่มจัดการหายไป
         }
 
         function updateLoginButtonUI(isLoggedIn) {
@@ -233,33 +229,63 @@
                 loginBtn.classList.replace('hover:bg-[#12264A]', 'hover:bg-red-700');
                 loginBtn.onclick = logout;
             } else {
-                loginBtn.innerHTML = 'เข้าสู่ระบบ (Admin)';
+                loginBtn.innerHTML = 'เข้าสู่ระบบ (เจ้าหน้าที่)';
                 loginBtn.classList.replace('bg-red-600', 'bg-[#1A3668]');
                 loginBtn.classList.replace('hover:bg-red-700', 'hover:bg-[#12264A]');
                 loginBtn.onclick = openLoginModal;
             }
         }
 
-        // ------------------------------------------------------------------
-        // 4. ระบบเปิด-ปิด ฟอร์มเพิ่มกิจกรรม
-        // ------------------------------------------------------------------
+        // ==========================================
+        // 4. ระบบจัดการฟอร์ม (เปิด/ปิด/โหมดแก้ไข)
+        // ==========================================
         function openEventModal() {
             if (!currentUser) {
                 alert('กรุณาเข้าสู่ระบบก่อนเพิ่มกิจกรรมครับ');
-                openLoginModal(); // ถ้ายังไม่ล็อกอิน ให้เด้งหน้าต่างล็อกอินขึ้นมา
+                openLoginModal();
             } else {
                 document.getElementById('eventModal').classList.remove('hidden');
+            }
+        }
+
+        async function openEditModal(eventId) {
+            try {
+                const { data: event, error } = await _supabase.from('events').select('*').eq('event_id', eventId).single();
+                if (error) throw error;
+
+                editingEventId = eventId;
+                
+                document.getElementById('modal-title').innerHTML = 'แก้ไขข้อมูลกิจกรรม';
+                document.getElementById('btn-submit').innerHTML = 'บันทึกการแก้ไข';
+
+                document.getElementById('form-title').value = event.title;
+                document.getElementById('form-category').value = event.category_id;
+                if (event.start_datetime) document.getElementById('form-start').value = event.start_datetime.substring(0, 16);
+                if (event.end_datetime) document.getElementById('form-end').value = event.end_datetime.substring(0, 16);
+                document.getElementById('form-location').value = event.location;
+                document.getElementById('form-audience-desc').value = event.target_audience_desc || '';
+                document.getElementById('form-audience-count').value = event.target_count || 0;
+                document.getElementById('form-organizer').value = event.organizer;
+                document.getElementById('form-remarks').value = event.remarks || '';
+
+                document.getElementById('eventModal').classList.remove('hidden');
+            } catch (err) {
+                alert('ไม่สามารถดึงข้อมูลได้: ' + err.message);
             }
         }
 
         function closeEventModal() {
             document.getElementById('eventModal').classList.add('hidden');
             document.getElementById('addEventForm').reset();
+            
+            editingEventId = null;
+            document.getElementById('modal-title').innerHTML = 'บันทึกกิจกรรมใหม่';
+            document.getElementById('btn-submit').innerHTML = 'บันทึกข้อมูล';
         }
 
-        // ------------------------------------------------------------------
-        // 5. โหลดและบันทึกข้อมูลตาราง (เหมือนเดิม)
-        // ------------------------------------------------------------------
+        // ==========================================
+        // 5. โหลดข้อมูลลงตาราง & เช็กสิทธิ์ปุ่ม
+        // ==========================================
         function formatThaiDate(isoString) {
             const date = new Date(isoString);
             const dateStr = date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -274,7 +300,7 @@
                 if (error) throw error;
 
                 if (!events || events.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">ยังไม่มีกิจกรรมในระบบ</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">ยังไม่มีกิจกรรมในระบบ</td></tr>`;
                     return;
                 }
 
@@ -282,6 +308,18 @@
                 events.forEach(event => {
                     const timeInfo = formatThaiDate(event.start_datetime);
                     const endTimeInfo = formatThaiDate(event.end_datetime);
+                    
+                    let actionButtons = '-';
+
+                    // ตรรกะจัดการสิทธิ์ (เจ้าของ หรือ แอดมิน ถึงจะเห็นปุ่ม)
+                    if (currentUser && (currentUser.email === event.created_by || currentUser.email === ADMIN_EMAIL)) {
+                        actionButtons = `
+                            <div class="flex justify-center gap-3">
+                                <button onclick="openEditModal('${event.event_id}')" class="text-xs text-amber-600 hover:text-amber-800 font-medium transition">แก้ไข</button>
+                                <button onclick="deleteEvent('${event.event_id}')" class="text-xs text-red-500 hover:text-red-700 font-medium transition">ลบ</button>
+                            </div>
+                        `;
+                    }
                     
                     const rowHTML = `
                         <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
@@ -297,17 +335,25 @@
                             <td class="p-4 text-sm text-center">
                                 <div class="text-slate-800 font-medium">${event.target_count}</div>
                             </td>
-                            <td class="p-4 text-sm text-slate-600">${event.organizer}</td>
+                            <td class="p-4 text-sm text-slate-600">
+                                ${event.organizer}
+                                <div class="text-[10px] text-slate-400 mt-1">ผู้บันทึก: ${event.created_by || '-'}</div>
+                            </td>
+                            <td class="p-4 text-sm text-center bg-slate-50/50">
+                                ${actionButtons}
+                            </td>
                         </tr>
                     `;
                     tableBody.innerHTML += rowHTML;
                 });
             } catch (err) {
-                console.error(err);
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">เกิดข้อผิดพลาด: ${err.message}</td></tr>`;
             }
         }
 
+        // ==========================================
+        // 6. บันทึก (เพิ่มใหม่ / แก้ไข) & ลบข้อมูล
+        // ==========================================
         async function saveEvent(e) {
             e.preventDefault(); 
             
@@ -315,8 +361,7 @@
             btnSubmit.innerHTML = 'กำลังบันทึก...';
             btnSubmit.disabled = true;
 
-            const newEvent = {
-                event_id: 'EVT-' + Date.now(),
+            const eventData = {
                 title: document.getElementById('form-title').value,
                 category_id: document.getElementById('form-category').value,
                 start_datetime: new Date(document.getElementById('form-start').value).toISOString(),
@@ -326,24 +371,44 @@
                 target_count: parseInt(document.getElementById('form-audience-count').value),
                 organizer: document.getElementById('form-organizer').value,
                 remarks: document.getElementById('form-remarks').value,
-                created_by: currentUser.email, // บันทึกว่าใครเป็นคนสร้าง
                 status: 'confirmed'
             };
 
             try {
-                const { error } = await _supabase.from('events').insert([newEvent]);
-                if (error) throw error;
+                if (editingEventId) {
+                    const { error } = await _supabase.from('events').update(eventData).eq('event_id', editingEventId);
+                    if (error) throw error;
+                    alert('แก้ไขข้อมูลกิจกรรมสำเร็จ!');
+                } else {
+                    eventData.event_id = 'EVT-' + Date.now();
+                    eventData.created_by = currentUser.email; 
+                    const { error } = await _supabase.from('events').insert([eventData]);
+                    if (error) throw error;
+                    alert('บันทึกข้อมูลกิจกรรมใหม่สำเร็จ!');
+                }
 
-                alert('บันทึกข้อมูลกิจกรรมสำเร็จ!');
                 closeEventModal();
                 loadEvents(); 
                 
             } catch (err) {
-                console.error(err);
                 alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message);
             } finally {
-                btnSubmit.innerHTML = 'บันทึกข้อมูล';
+                btnSubmit.innerHTML = editingEventId ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล';
                 btnSubmit.disabled = false;
+            }
+        }
+
+        async function deleteEvent(eventId) {
+            if (!confirm('คุณต้องการลบกิจกรรมนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+            
+            try {
+                const { error } = await _supabase.from('events').delete().eq('event_id', eventId);
+                if (error) throw error;
+                
+                alert('ลบข้อมูลกิจกรรมเรียบร้อยแล้ว');
+                loadEvents(); 
+            } catch (err) {
+                alert('คุณไม่มีสิทธิ์ลบข้อมูลนี้ หรือเกิดข้อผิดพลาด: ' + err.message);
             }
         }
     </script>
